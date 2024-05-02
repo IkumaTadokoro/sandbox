@@ -8,6 +8,7 @@ import (
 )
 
 type UserService interface {
+	GetUserByID(ctx context.Context, ID string) (*model.User, error)
 	GetUserByName(ctx context.Context, name string) (*model.User, error)
 }
 
