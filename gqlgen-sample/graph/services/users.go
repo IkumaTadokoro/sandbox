@@ -45,3 +45,22 @@ func (u *userService) GetUserByName(ctx context.Context, name string) (*model.Us
 
 	return convertUser(user), nil
 }
+
+func (u *userService) ListUsersByID(ctx context.Context, IDs []string) ([]*model.User, error) {
+	users, err := db.Users(
+		qm.Select(db.UserTableColumns.ID, db.UserTableColumns.Name),
+		db.UserWhere.ID.IN(IDs),
+	).All(ctx, u.exec)
+	if err != nil {
+		return nil, err
+	}
+	return convertUserSlice(users), nil
+}
+
+func convertUserSlice(users db.UserSlice) []*model.User {
+	result := make([]*model.User, 0, len(users))
+	for _, user := range users {
+		result = append(result, convertUser(user))
+	}
+	return result
+}

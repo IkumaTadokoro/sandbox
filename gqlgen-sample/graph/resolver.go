@@ -8,4 +8,5 @@ import "gqlgen-training/graph/services"
 
 type Resolver struct {
 	Srv services.Services
+	*Loaders
 }
