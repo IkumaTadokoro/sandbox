@@ -6,9 +6,11 @@ package graph
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"gqlgen-training/graph/model"
 	"gqlgen-training/internal"
+	"strings"
 )
 
 // Author is the resolver for the author field.
@@ -26,6 +28,16 @@ func (r *mutationResolver) AddProjectV2ItemByID(ctx context.Context, input model
 	panic(fmt.Errorf("not implemented: AddProjectV2ItemByID - addProjectV2ItemById"))
 }
 
+// Items is the resolver for the items field.
+func (r *projectV2Resolver) Items(ctx context.Context, obj *model.ProjectV2, after *string, before *string, first *int, last *int) (*model.ProjectV2ItemConnection, error) {
+	panic(fmt.Errorf("not implemented: Items - items"))
+}
+
+// Owner is the resolver for the owner field.
+func (r *projectV2Resolver) Owner(ctx context.Context, obj *model.ProjectV2) (*model.User, error) {
+	panic(fmt.Errorf("not implemented: Owner - owner"))
+}
+
 // Repository is the resolver for the repository field.
 func (r *queryResolver) Repository(ctx context.Context, name string, owner string) (*model.Repository, error) {
 	return r.Srv.GetRepoByFullName(ctx, owner, name)
@@ -38,7 +50,15 @@ func (r *queryResolver) User(ctx context.Context, name string) (*model.User, err
 
 // Node is the resolver for the node field.
 func (r *queryResolver) Node(ctx context.Context, id string) (model.Node, error) {
-	panic(fmt.Errorf("not implemented: Node - node"))
+	nElems := strings.SplitN(id, "_", 2)
+	nType, _ := nElems[0], nElems[1]
+
+	switch nType {
+	case "U":
+		return r.Srv.GetUserByID(ctx, id)
+	default:
+		return nil, errors.New("invalid ID")
+	}
 }
 
 // Owner is the resolver for the owner field.
@@ -66,11 +86,24 @@ func (r *repositoryResolver) PullRequests(ctx context.Context, obj *model.Reposi
 	panic(fmt.Errorf("not implemented: PullRequests - pullRequests"))
 }
 
+// ProjectV2 is the resolver for the projectV2 field.
+func (r *userResolver) ProjectV2(ctx context.Context, obj *model.User, number int) (*model.ProjectV2, error) {
+	return r.Srv.GetProjectV2ByOwnerAndNumber(ctx, obj.ID, number)
+}
+
+// ProjectV2s is the resolver for the projectV2s field.
+func (r *userResolver) ProjectV2s(ctx context.Context, obj *model.User, after *string, before *string, first *int, last *int) (*model.ProjectV2Connection, error) {
+	return r.Srv.ListProjectByOwner(ctx, obj.ID, after, before, first, last)
+}
+
 // Issue returns internal.IssueResolver implementation.
 func (r *Resolver) Issue() internal.IssueResolver { return &issueResolver{r} }
 
 // Mutation returns internal.MutationResolver implementation.
 func (r *Resolver) Mutation() internal.MutationResolver { return &mutationResolver{r} }
+
+// ProjectV2 returns internal.ProjectV2Resolver implementation.
+func (r *Resolver) ProjectV2() internal.ProjectV2Resolver { return &projectV2Resolver{r} }
 
 // Query returns internal.QueryResolver implementation.
 func (r *Resolver) Query() internal.QueryResolver { return &queryResolver{r} }
@@ -78,7 +111,12 @@ func (r *Resolver) Query() internal.QueryResolver { return &queryResolver{r} }
 // Repository returns internal.RepositoryResolver implementation.
 func (r *Resolver) Repository() internal.RepositoryResolver { return &repositoryResolver{r} }
 
+// User returns internal.UserResolver implementation.
+func (r *Resolver) User() internal.UserResolver { return &userResolver{r} }
+
 type issueResolver struct{ *Resolver }
 type mutationResolver struct{ *Resolver }
+type projectV2Resolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
 type repositoryResolver struct{ *Resolver }
+type userResolver struct{ *Resolver }
