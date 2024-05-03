@@ -6,6 +6,7 @@ import (
 	"gqlgen-training/graph"
 	"gqlgen-training/graph/services"
 	"gqlgen-training/internal"
+	"gqlgen-training/middleware/auth"
 	"log"
 	"net/http"
 	"os"
@@ -35,15 +36,18 @@ func main() {
 
 	service := services.New(db)
 
-	srv := handler.NewDefaultServer(internal.NewExecutableSchema(internal.Config{Resolvers: &graph.Resolver{
-		Srv:     service,
-		Loaders: graph.NewLoaders(service),
-	},
-		Complexity: graph.ComplexityConfig()}))
+	srv := handler.NewDefaultServer(internal.NewExecutableSchema(internal.Config{
+		Resolvers: &graph.Resolver{
+			Srv:     service,
+			Loaders: graph.NewLoaders(service),
+		},
+		Complexity: graph.ComplexityConfig(),
+		Directives: graph.Directive,
+	}))
 	srv.Use(extension.FixedComplexityLimit(10))
 
 	http.Handle("/", playground.Handler("GraphQL playground", "/query"))
-	http.Handle("/query", srv)
+	http.Handle("/query", auth.AuthMiddleWare(srv))
 
 	log.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
 	log.Fatal(http.ListenAndServe(":"+port, nil))
