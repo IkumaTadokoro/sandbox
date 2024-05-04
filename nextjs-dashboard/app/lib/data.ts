@@ -1,5 +1,5 @@
 import { sql } from '@vercel/postgres';
-import {
+import type {
   CustomerField,
   CustomersTableType,
   InvoiceForm,
